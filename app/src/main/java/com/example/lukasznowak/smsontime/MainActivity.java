@@ -19,6 +19,9 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CheckBox;
@@ -447,6 +450,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         Toast.makeText(getApplicationContext(), "All data was removed.", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.info:
+                showIconsSource();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void showIconsSource(){
+        Toast.makeText(getApplicationContext(), "All icons come from the website " +
+                "https://icons8.com/icons", Toast.LENGTH_SHORT).show();
     }
 
 }
