@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -19,9 +20,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CheckBox;
@@ -35,7 +33,19 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnCheckedChangeListener{
+
+    private SharedPreferences sharedPreferences;
+
+    private final String MESSAGE_PREFERENCE_KEY = "message_key";
+    private final String DATE_PREFERENCE_KEY = "date_key";
+    private final String CONTACT_PREFERENCE_KEY = "contact_key";
+    private final String PHONE_NUMBER_PREFERENCE_KEY = "number_key";
+    private final String SEND_MESSAGE_CHECKBOX_KEY = "checkBox_key";
+    private final String MESSAGE_STATUS_KEY = "message_status_key";
+
+    private final String colorBlack = "#000000";
+    private final String colorRed = "#FF0000";
 
     private Calendar calendar;
 
@@ -49,7 +59,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private String message = "";
     private String date = "";
+    private String contact ="";
     private String phone = "";
+
+    private String SMSstatus = "";
 
     private final static int PERMISSIONS_SEND_SMS = 101;
     private final static int PERMISSIONS_READ_CONTACT = 102;
@@ -61,34 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sendMessageCheckBox = findViewById(R.id.sendMessageCheckBox);
-        sendMessageCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener(){
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-            {
-                if(isChecked){
-
-                    if(message == "" || date == "" || phone == ""){
-
-                        Toast.makeText(getApplicationContext(), "You aren't fill all needed fields.",
-                                Toast.LENGTH_SHORT).show();
-
-                        sendMessageCheckBox.setChecked(false);
-
-                    }else{
-                        startAlarmManager();
-
-                        Toast.makeText(getApplicationContext(), "Message will be send on " +
-                                date, Toast.LENGTH_SHORT).show();
-                    }
-                }else{
-                    stopAlarmManager();
-
-                    Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        sharedPreferences = getPreferences(Context.MODE_PRIVATE);
 
         calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
@@ -98,6 +84,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.dateButton).setOnClickListener(MainActivity.this);
         findViewById(R.id.contactButton).setOnClickListener(MainActivity.this);
         findViewById(R.id.clearButton).setOnClickListener(MainActivity.this);
+        findViewById(R.id.exitButton).setOnClickListener(MainActivity.this);
+
+        sendMessageCheckBox = findViewById(R.id.sendMessageCheckBox);
 
         checkPermissions();
     }
@@ -106,15 +95,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
 
-        if(System.currentTimeMillis() < calendar.getTimeInMillis() &&
-                sendMessageCheckBox.isChecked()){
+        sendMessageCheckBox.setOnCheckedChangeListener(MainActivity.this);
 
-            sendMessageCheckBox.setChecked(false);
+        loadPreferenceValue();
+
+        showPreferenceValueInTextView();
+
+        if(SMSstatus.equals("SMS sent!")){
 
             Toast.makeText(getApplicationContext(), "Message was successfully send on " +
                     date, Toast.LENGTH_SHORT).show();
 
-            resetDate();
+            resetAllData();
         }
     }
 
@@ -142,6 +134,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 resetAllData();
                 break;
             }
+
+            case R.id.exitButton:{
+                System.exit(0);
+                break;
+            }
         }
     }
 
@@ -162,16 +159,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 month = datePicker.getMonth();
                 day = datePicker.getDayOfMonth();
 
-                StringBuilder stringBuilder = new StringBuilder();
-
-                stringBuilder.append(day);
-                stringBuilder.append("/");
-                stringBuilder.append(month + 1);
-                stringBuilder.append("/");
-                stringBuilder.append(year);
-                stringBuilder.append(" ");
-
-                date = stringBuilder.toString();
+                addYearMonthDayToDate();
 
                 runTimePicker();
             }
@@ -210,15 +198,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 hour = timePicker.getCurrentHour();
                 minutes = timePicker.getCurrentMinute();
 
-                StringBuilder stringBuilder = new StringBuilder();
+                addHourMinutesToDate();
 
-                stringBuilder.append(hour);
-                stringBuilder.append(":");
-                stringBuilder.append(minutes);
-
-                date += stringBuilder.toString();
-
-                calendar.set(year,month, day, hour,minutes);
+                calendar.set(year, month, day, hour,minutes);
 
 
                 if(System.currentTimeMillis() < calendar.getTimeInMillis()) {
@@ -227,9 +209,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         @Override
                         public void run() {
 
+                            savePreference(DATE_PREFERENCE_KEY, date);
+
                             TextView dateTextView = findViewById(R.id.dateTextView);
-                            dateTextView.setTextColor(Color.parseColor("#000000"));
-                            dateTextView.setText(date);
+
+                            setTextViewValue(dateTextView, date, colorBlack);
                         }
                     });
 
@@ -277,9 +261,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void run() {
 
+                        savePreference(MESSAGE_PREFERENCE_KEY, message);
+
                         TextView messageTextView = findViewById(R.id.messageTextView);
-                        messageTextView.setTextColor(Color.parseColor("#000000"));
-                        messageTextView.setText(message);
+
+                        setTextViewValue(messageTextView, message, colorBlack);
                     }
                 });
             }
@@ -388,11 +374,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String name = cursor.getString(columnName);
                         String number = cursor.getString(columnNumber);
 
-                        TextView textView = findViewById(R.id.contactTextView);
-                        textView.setTextColor(Color.parseColor("#000000"));
-                        textView.setText(name + " ( " + number + " ) ");
-
+                        contact = name + " ( " + number + " ) ";
                         phone = number;
+
+                        savePreference(CONTACT_PREFERENCE_KEY, contact);
+                        savePreference(PHONE_NUMBER_PREFERENCE_KEY, phone);
+
+                        TextView contactTextView = findViewById(R.id.contactTextView);
+
+                        setTextViewValue(contactTextView, contact, colorBlack);
                     }
                 });
             }
@@ -428,52 +418,150 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
 
                 message = "";
-
-                TextView messageTextView = findViewById(R.id.messageTextView);
-                messageTextView.setTextColor(Color.parseColor("#FF0000"));
-                messageTextView.setText("There is no message to send");
+                savePreference(MESSAGE_PREFERENCE_KEY, message);
 
                 resetDate();
+                savePreference(DATE_PREFERENCE_KEY, date);
 
-                TextView dateTextView = findViewById(R.id.dateTextView);
-                dateTextView.setTextColor(Color.parseColor("#FF0000"));
-                dateTextView.setText("The date isn't set");
-
+                contact = "";
                 phone = "";
+                savePreference(CONTACT_PREFERENCE_KEY, contact);
+                savePreference(PHONE_NUMBER_PREFERENCE_KEY, phone);
 
-                TextView contactTextView = findViewById(R.id.contactTextView);
-                contactTextView.setTextColor(Color.parseColor("#FF0000"));
-                contactTextView.setText("Contacts weren't selected");
+                showPreferenceValueInTextView();
 
                 sendMessageCheckBox.setChecked(false);
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+
+                SMSstatus = "";
+                savePreference(MESSAGE_STATUS_KEY, "");
             }
         });
 
         Toast.makeText(getApplicationContext(), "All data was removed.", Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
+    private void addYearMonthDayToDate(){
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(day);
+        stringBuilder.append("/");
+        stringBuilder.append(month + 1);
+        stringBuilder.append("/");
+        stringBuilder.append(year);
+        stringBuilder.append(" ");
+
+        date = stringBuilder.toString();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    private void addHourMinutesToDate(){
 
-        switch (item.getItemId()) {
-            case R.id.info:
-                showIconsSource();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(hour);
+        stringBuilder.append(":");
+
+        if(minutes < 10){
+            stringBuilder.append(0);
+        }
+        stringBuilder.append(minutes);
+
+        date += stringBuilder.toString();
+    }
+
+    private void savePreference(String key, String value){
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, value);
+        editor.commit();
+    }
+
+    private void savePreference(String key, boolean value){
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(key, value);
+        editor.commit();
+    }
+
+    private void loadPreferenceValue(){
+
+        SMSstatus = sharedPreferences.getString(MESSAGE_STATUS_KEY, "");
+
+        message = sharedPreferences.getString(MESSAGE_PREFERENCE_KEY, "");
+        date = sharedPreferences.getString(DATE_PREFERENCE_KEY, "");
+        contact = sharedPreferences.getString(CONTACT_PREFERENCE_KEY, "");
+        phone = sharedPreferences.getString(PHONE_NUMBER_PREFERENCE_KEY, "");
+
+        sendMessageCheckBox.setChecked(sharedPreferences.getBoolean(SEND_MESSAGE_CHECKBOX_KEY, false));
+    }
+
+    private void setTextViewValue(TextView textView, String value, String color){
+
+        textView.setTextColor(Color.parseColor(color));
+        textView.setText(value);
+    }
+
+    private void showPreferenceValueInTextView(){
+
+        TextView messageTextView = findViewById(R.id.messageTextView);
+        TextView dateTextView = findViewById(R.id.dateTextView);
+        TextView contactTextView = findViewById(R.id.contactTextView);
+
+        if(message.equals("")){
+            setTextViewValue(messageTextView, "There is no message to send", colorRed);
+        }else {
+            setTextViewValue(messageTextView, message, colorBlack);
+        }
+
+        if(date.equals("")){
+            setTextViewValue(dateTextView, "The date isn't set", colorRed);
+        }else {
+            setTextViewValue(dateTextView, date, colorBlack);
+        }
+
+        if(contact.equals("")){
+            setTextViewValue(contactTextView, "Contacts weren't selected", colorRed);
+        }else {
+            setTextViewValue(contactTextView, contact, colorBlack);
         }
     }
 
-    private void showIconsSource(){
-        Toast.makeText(getApplicationContext(), "All icons come from the website " +
-                "https://icons8.com/icons", Toast.LENGTH_SHORT).show();
-    }
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
+        if(isChecked){
+
+            if(message.equals("") || date.equals("") || phone.equals("")){
+
+                Toast.makeText(getApplicationContext(), "You are not fill all needed fields.",
+                        Toast.LENGTH_LONG).show();
+
+                sendMessageCheckBox.setChecked(false);
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+
+            } else {
+
+                if(SMSstatus.equals("")) {
+
+                    startAlarmManager();
+                    savePreference(SEND_MESSAGE_CHECKBOX_KEY, true);
+
+                    savePreference(MESSAGE_STATUS_KEY, "Pending on send!");
+
+                    Toast.makeText(getApplicationContext(), "Message will be send on " +
+                            date, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        }else {
+
+            stopAlarmManager();
+            savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+
+            savePreference(MESSAGE_STATUS_KEY, "");
+
+            Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
+        }
+    }
 }

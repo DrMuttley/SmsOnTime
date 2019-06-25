@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">SmsOnTime</string>
+
+    <string name="messageTextView">There is no message to send</string>
+
+    <string name="messageButton">TAP TO PROVIDE MESSAGE</string>
+
+    <string name="dateTextView">The date is not set</string>
+
+    <string name="dateButton">TAP TO SET DATE</string>
+
+    <string name="contactTextView">Contacts were not selected</string>
+
+    <string name="contactButton">TAP TO SELECT CONTACT</string>
+
+    <string name="sendMessageCheckBox">Send a message</string>
+
+    <string name="exitButton">EXIT</string>
+
+    <string name="clearButton">CLEAR ALL DATA</string>
+
 </resources>
