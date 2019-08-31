@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SmsOnTime</string>
+    <string name="app_name">Send SMS on time</string>
 
     <string name="messageTextView">There is no message to send</string>
 

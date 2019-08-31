@@ -1,6 +1,7 @@
 package com.example.lukasznowak.smsontime;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -12,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -31,6 +33,7 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnCheckedChangeListener{
@@ -39,10 +42,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private final String MESSAGE_PREFERENCE_KEY = "message_key";
     private final String DATE_PREFERENCE_KEY = "date_key";
+    private final String CALENDAR_KEY = "calendar_key";
     private final String CONTACT_PREFERENCE_KEY = "contact_key";
     private final String PHONE_NUMBER_PREFERENCE_KEY = "number_key";
     private final String SEND_MESSAGE_CHECKBOX_KEY = "checkBox_key";
-    private final String MESSAGE_STATUS_KEY = "message_status_key";
 
     private final String colorBlack = "#000000";
     private final String colorRed = "#FF0000";
@@ -62,10 +65,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String contact ="";
     private String phone = "";
 
-    private String SMSstatus = "";
-
     private final static int PERMISSIONS_SEND_SMS = 101;
     private final static int PERMISSIONS_READ_CONTACT = 102;
+    private final static int PERMISSIONS_READ_SMS = 103;
 
     private final int PHONE_REQUEST_CODE = 111;
 
@@ -101,13 +103,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         showPreferenceValueInTextView();
 
-        if(SMSstatus.equals("SMS sent!")){
+        if(smsWasSent()){
 
-            Toast.makeText(getApplicationContext(), "Message was successfully send on " +
+            Toast.makeText(getApplicationContext(), "Message was sent on " +
                     date, Toast.LENGTH_SHORT).show();
 
             resetAllData();
         }
+
     }
 
     @Override
@@ -126,7 +129,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             case R.id.contactButton:{
-                takeNumber(PHONE_REQUEST_CODE);
+
+                if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                        != PackageManager.PERMISSION_GRANTED){
+
+                    ActivityCompat.requestPermissions(this, new String[]{
+                            Manifest.permission.READ_CONTACTS}, PERMISSIONS_READ_CONTACT);
+                } else {
+                    takeNumber(PHONE_REQUEST_CODE);
+                }
                 break;
             }
 
@@ -201,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 addHourMinutesToDate();
 
                 calendar.set(year, month, day, hour,minutes);
-
+                savePreference(CALENDAR_KEY, calendar);
 
                 if(System.currentTimeMillis() < calendar.getTimeInMillis()) {
 
@@ -297,11 +308,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 != PackageManager.PERMISSION_GRANTED ||
 
                 ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                        != PackageManager.PERMISSION_GRANTED ||
+
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
                         != PackageManager.PERMISSION_GRANTED){
 
             ActivityCompat.requestPermissions(this, new String[]{
                             Manifest.permission.SEND_SMS,
-                            Manifest.permission.READ_CONTACTS,},
+                            Manifest.permission.READ_CONTACTS,
+                            Manifest.permission.READ_SMS},
                     PERMISSIONS_SEND_SMS);
         }
     }
@@ -330,7 +345,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 555,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }else{
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }
     }
 
     private void stopAlarmManager(){
@@ -339,7 +359,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = new Intent(this, AlarmReceiver.class);
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 444,
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 555,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         alarmManager.cancel(pendingIntent);
@@ -373,6 +393,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         String name = cursor.getString(columnName);
                         String number = cursor.getString(columnNumber);
+
+                        number = number.replaceAll("\\s+", "");
 
                         contact = name + " ( " + number + " ) ";
                         phone = number;
@@ -408,6 +430,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             }
+            case PERMISSIONS_READ_SMS: {
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Log.d("READ_SMS", "Permission READ_SMS granted.");
+                }else{
+                    Log.d("READ_SMS", "Permission READ_SMS denied.");
+                }
+                break;
+            }
         }
     }
 
@@ -432,13 +462,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
-
-                SMSstatus = "";
-                savePreference(MESSAGE_STATUS_KEY, "");
             }
         });
-
-        Toast.makeText(getApplicationContext(), "All data was removed.", Toast.LENGTH_SHORT).show();
     }
 
     private void addYearMonthDayToDate(){
@@ -470,26 +495,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         date += stringBuilder.toString();
     }
 
-    private void savePreference(String key, String value){
+    public void savePreference(String key, String value){
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(key, value);
-        editor.commit();
+        editor.apply();
     }
 
     private void savePreference(String key, boolean value){
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(key, value);
-        editor.commit();
+        editor.apply();
+    }
+
+    private void savePreference(String key, Calendar calendar){
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(key, calendar.getTimeInMillis());
+        editor.apply();
     }
 
     private void loadPreferenceValue(){
 
-        SMSstatus = sharedPreferences.getString(MESSAGE_STATUS_KEY, "");
-
         message = sharedPreferences.getString(MESSAGE_PREFERENCE_KEY, "");
         date = sharedPreferences.getString(DATE_PREFERENCE_KEY, "");
+        calendar.setTimeInMillis(sharedPreferences.getLong(CALENDAR_KEY, 0));
         contact = sharedPreferences.getString(CONTACT_PREFERENCE_KEY, "");
         phone = sharedPreferences.getString(PHONE_NUMBER_PREFERENCE_KEY, "");
 
@@ -508,31 +539,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TextView dateTextView = findViewById(R.id.dateTextView);
         TextView contactTextView = findViewById(R.id.contactTextView);
 
-        if(message.equals("")){
-            setTextViewValue(messageTextView, "There is no message to send", colorRed);
-        }else {
+//        if(message.equals("")){
+//            setTextViewValue(messageTextView, "There is no message to send", colorRed);
+//        }else {
             setTextViewValue(messageTextView, message, colorBlack);
-        }
-
-        if(date.equals("")){
-            setTextViewValue(dateTextView, "The date isn't set", colorRed);
-        }else {
+        //}
+//
+//        if(date.equals("")){
+//            setTextViewValue(dateTextView, "The date isn't set", colorRed);
+//        }else {
             setTextViewValue(dateTextView, date, colorBlack);
-        }
+       // }
 
-        if(contact.equals("")){
-            setTextViewValue(contactTextView, "Contacts weren't selected", colorRed);
-        }else {
+//        if(contact.equals("")){
+//            setTextViewValue(contactTextView, "Contacts weren't selected", colorRed);
+//        }else {
             setTextViewValue(contactTextView, contact, colorBlack);
-        }
+      //  }
     }
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
-        if(isChecked){
+        if(isChecked) {
 
-            if(message.equals("") || date.equals("") || phone.equals("")){
+            if (message.equals("") || date.equals("") || phone.equals("")) {
 
                 Toast.makeText(getApplicationContext(), "You are not fill all needed fields.",
                         Toast.LENGTH_LONG).show();
@@ -540,28 +571,78 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
 
+            } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+                    != PackageManager.PERMISSION_GRANTED ||
+
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                            != PackageManager.PERMISSION_GRANTED) {
+
+                sendMessageCheckBox.setChecked(false);
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+
+                ActivityCompat.requestPermissions(this, new String[]{
+                                Manifest.permission.READ_SMS,
+                                Manifest.permission.SEND_SMS},
+                        PERMISSIONS_SEND_SMS);
+
+            } else if (System.currentTimeMillis() >= calendar.getTimeInMillis() /* && !smsWasSent()*/) {
+
+                Toast.makeText(getApplicationContext(), "The set date has already passed. Before " +
+                        "continue please set date again.", Toast.LENGTH_LONG).show();
+
+                sendMessageCheckBox.setChecked(false);
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+
+//            } else if(smsWasSent()){
+//
+//                Toast.makeText(getApplicationContext(), "Message was sent on " +
+//                        date, Toast.LENGTH_SHORT).show();
+//
+//                resetAllData();
+
             } else {
 
-                if(SMSstatus.equals("")) {
+                Toast.makeText(getApplicationContext(), "Message will be send on " +
+                        date, Toast.LENGTH_SHORT).show();
 
-                    startAlarmManager();
-                    savePreference(SEND_MESSAGE_CHECKBOX_KEY, true);
-
-                    savePreference(MESSAGE_STATUS_KEY, "Pending on send!");
-
-                    Toast.makeText(getApplicationContext(), "Message will be send on " +
-                            date, Toast.LENGTH_SHORT).show();
-                }
+                startAlarmManager();
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, true);
             }
 
-        }else {
+        } else {
 
-            stopAlarmManager();
-            savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+            if (PendingIntent.getBroadcast(this, 555,
+                    new Intent(this, AlarmReceiver.class),
+                    PendingIntent.FLAG_NO_CREATE) != null) {
 
-            savePreference(MESSAGE_STATUS_KEY, "");
+                Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
 
-            Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
+                stopAlarmManager();
+                savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
+            }
         }
+    }
+
+    private boolean smsWasSent() {
+
+        Cursor cursor = getContentResolver().query(Uri.parse("content://sms/sent"), null, null, null, null);
+                                                                    //inbox
+        if (cursor.moveToFirst()) {
+
+            do {
+
+                for (int i = 0; i < cursor.getColumnCount(); i++) {
+
+                    if(cursor.getString(cursor.getColumnIndexOrThrow("address")).equals(phone) &&
+                            cursor.getString(cursor.getColumnIndexOrThrow("body")).equals(message)){
+                        return true;
+                    }
+                }
+
+            } while (cursor.moveToNext());
+        } else {
+            // empty box, no SMS
+        }
+        return false;
     }
 }
