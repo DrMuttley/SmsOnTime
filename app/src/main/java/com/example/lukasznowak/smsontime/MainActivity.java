@@ -1,7 +1,6 @@
 package com.example.lukasznowak.smsontime;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -33,7 +32,6 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnCheckedChangeListener{
@@ -68,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int PERMISSIONS_SEND_SMS = 101;
     private final static int PERMISSIONS_READ_CONTACT = 102;
     private final static int PERMISSIONS_READ_SMS = 103;
+    private final static int PERMISSIONS_WAKE_LOCK = 104;
+
+    private boolean readSmsPermissionFlag = false;
 
     private final int PHONE_REQUEST_CODE = 111;
 
@@ -103,14 +104,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         showPreferenceValueInTextView();
 
-        if(smsWasSent()){
+        if(readSmsPermissionFlag && smsWasSent()){
 
             Toast.makeText(getApplicationContext(), "Message was sent on " +
                     date, Toast.LENGTH_SHORT).show();
 
             resetAllData();
         }
-
     }
 
     @Override
@@ -316,7 +316,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ActivityCompat.requestPermissions(this, new String[]{
                             Manifest.permission.SEND_SMS,
                             Manifest.permission.READ_CONTACTS,
-                            Manifest.permission.READ_SMS},
+                            Manifest.permission.READ_SMS,
+                            Manifest.permission.WAKE_LOCK},
                     PERMISSIONS_SEND_SMS);
         }
     }
@@ -416,6 +417,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (requestCode) {
             case PERMISSIONS_SEND_SMS: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    readSmsPermissionFlag = true;
+
                     Log.d("SEND_SMS", "Permission SEND_SMS granted.");
                 } else {
                     Log.d("SEND_SMS", "Permission SEND_SMS denied.");
@@ -435,6 +439,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("READ_SMS", "Permission READ_SMS granted.");
                 }else{
                     Log.d("READ_SMS", "Permission READ_SMS denied.");
+                }
+                break;
+            }
+            case PERMISSIONS_WAKE_LOCK: {
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK granted.");
+                }else{
+                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK denied.");
                 }
                 break;
             }
