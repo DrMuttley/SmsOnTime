@@ -589,13 +589,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
 
-//            } else if(smsWasSent()){
-//
-//                Toast.makeText(getApplicationContext(), "Message was sent on " +
-//                        date, Toast.LENGTH_SHORT).show();
-//
-//                resetAllData();
-
             } else {
 
                 Toast.makeText(getApplicationContext(), "Message will be send on " +
@@ -611,7 +604,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     new Intent(this, AlarmReceiver.class),
                     PendingIntent.FLAG_NO_CREATE) != null) {
 
-                Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
 
                 stopAlarmManager();
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
