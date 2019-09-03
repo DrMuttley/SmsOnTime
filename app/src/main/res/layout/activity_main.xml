@@ -52,7 +52,6 @@
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.477"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dateTextView" />
 
@@ -61,7 +60,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:text="@string/contactTextView"
         android:textSize="20sp"
         android:textColor="#FF0000"
         app:layout_constraintEnd_toEndOf="parent"
@@ -86,8 +84,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
         android:text="@string/sendMessageCheckBox"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -96,14 +92,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/contactButton" />
 
+
     <Button
         android:id="@+id/clearButton"
         android:layout_width="250sp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp"
         android:background="@drawable/button_grey"
         android:text="@string/clearButton"
         android:textColor="#FFFFFF"
@@ -112,20 +106,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-
     <Button
         android:id="@+id/exitButton"
         android:layout_width="250sp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:layout_marginBottom="8dp"
         android:background="@drawable/button_orange"
         android:text="@string/exitButton"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.485"
         app:layout_constraintStart_toStartOf="parent" />
 
 

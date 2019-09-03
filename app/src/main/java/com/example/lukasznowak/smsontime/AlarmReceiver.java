@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.content.WakefulBroadcastReceiver;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.EditText;
@@ -16,7 +17,7 @@ import android.widget.Toast;
 import java.security.Provider;
 import java.util.ArrayList;
 
-public class AlarmReceiver extends BroadcastReceiver{
+public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {

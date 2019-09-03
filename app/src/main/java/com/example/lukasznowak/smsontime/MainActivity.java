@@ -40,13 +40,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private final String MESSAGE_PREFERENCE_KEY = "message_key";
     private final String DATE_PREFERENCE_KEY = "date_key";
-    private final String CALENDAR_KEY = "calendar_key";
+    private final String CALENDAR_PREFERENCE_KEY = "calendar_key";
     private final String CONTACT_PREFERENCE_KEY = "contact_key";
     private final String PHONE_NUMBER_PREFERENCE_KEY = "number_key";
+    private final String SMS_PERMISSION_PREFERENCE_KEY = "SMS_permission_key";
     private final String SEND_MESSAGE_CHECKBOX_KEY = "checkBox_key";
 
     private final String colorBlack = "#000000";
-    private final String colorRed = "#FF0000";
 
     private Calendar calendar;
 
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int PERMISSIONS_READ_SMS = 103;
     private final static int PERMISSIONS_WAKE_LOCK = 104;
 
-    private boolean readSmsPermissionFlag = false;
+    private boolean readSmsPermissionFlag;
 
     private final int PHONE_REQUEST_CODE = 111;
 
@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 addHourMinutesToDate();
 
                 calendar.set(year, month, day, hour,minutes);
-                savePreference(CALENDAR_KEY, calendar);
+                savePreference(CALENDAR_PREFERENCE_KEY, calendar);
 
                 if(System.currentTimeMillis() < calendar.getTimeInMillis()) {
 
@@ -346,12 +346,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 555,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-        }else{
-            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-        }
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
     }
 
     private void stopAlarmManager(){
@@ -419,9 +414,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                     readSmsPermissionFlag = true;
-
+                    savePreference(SMS_PERMISSION_PREFERENCE_KEY, readSmsPermissionFlag);
                     Log.d("SEND_SMS", "Permission SEND_SMS granted.");
                 } else {
+                    readSmsPermissionFlag = false;
+                    savePreference(SMS_PERMISSION_PREFERENCE_KEY, readSmsPermissionFlag);
                     Log.d("SEND_SMS", "Permission SEND_SMS denied.");
                 }
                 break;
@@ -532,9 +529,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         message = sharedPreferences.getString(MESSAGE_PREFERENCE_KEY, "");
         date = sharedPreferences.getString(DATE_PREFERENCE_KEY, "");
-        calendar.setTimeInMillis(sharedPreferences.getLong(CALENDAR_KEY, 0));
+        calendar.setTimeInMillis(sharedPreferences.getLong(CALENDAR_PREFERENCE_KEY, 0));
         contact = sharedPreferences.getString(CONTACT_PREFERENCE_KEY, "");
         phone = sharedPreferences.getString(PHONE_NUMBER_PREFERENCE_KEY, "");
+        readSmsPermissionFlag = sharedPreferences.getBoolean(SMS_PERMISSION_PREFERENCE_KEY, false);
 
         sendMessageCheckBox.setChecked(sharedPreferences.getBoolean(SEND_MESSAGE_CHECKBOX_KEY, false));
     }
@@ -551,23 +549,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TextView dateTextView = findViewById(R.id.dateTextView);
         TextView contactTextView = findViewById(R.id.contactTextView);
 
-//        if(message.equals("")){
-//            setTextViewValue(messageTextView, "There is no message to send", colorRed);
-//        }else {
-            setTextViewValue(messageTextView, message, colorBlack);
-        //}
-//
-//        if(date.equals("")){
-//            setTextViewValue(dateTextView, "The date isn't set", colorRed);
-//        }else {
-            setTextViewValue(dateTextView, date, colorBlack);
-       // }
-
-//        if(contact.equals("")){
-//            setTextViewValue(contactTextView, "Contacts weren't selected", colorRed);
-//        }else {
-            setTextViewValue(contactTextView, contact, colorBlack);
-      //  }
+        setTextViewValue(messageTextView, message, colorBlack);
+        setTextViewValue(dateTextView, date, colorBlack);
+        setTextViewValue(contactTextView, contact, colorBlack);
     }
 
     @Override
