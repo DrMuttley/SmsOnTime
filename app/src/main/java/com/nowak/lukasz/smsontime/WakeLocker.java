@@ -1,4 +1,4 @@
-package com.example.lukasznowak.smsontime;
+package com.nowak.lukasz.smsontime;
 
 import android.content.Context;
 import android.os.PowerManager;

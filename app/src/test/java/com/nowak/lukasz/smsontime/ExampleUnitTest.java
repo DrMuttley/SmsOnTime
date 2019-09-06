@@ -1,4 +1,4 @@
-package com.example.lukasznowak.smsontime;
+package com.nowak.lukasz.smsontime;
 
 import org.junit.Test;
 

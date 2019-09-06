@@ -1,4 +1,4 @@
-package com.example.lukasznowak.smsontime;
+package com.nowak.lukasz.smsontime;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.lukasznowak.smsontime", appContext.getPackageName());
+        assertEquals("com.nowak.lukasz.smsontime", appContext.getPackageName());
     }
 }

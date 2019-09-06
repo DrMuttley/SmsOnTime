@@ -19,4 +19,59 @@
 
     <string name="clearButton">CLEAR ALL DATA</string>
 
+    <string name="privacyPolicy"> PRIVACY POLICY</string>
+    <string name="title_activity_privacy_policy">PRIVACY POLICY</string>
+    <string name="privacy_policy_text">
+
+        "The privacy policy of the mobile application Send SMS on time.\n\n"
+
+        "1.\n\n"
+
+        "This document describes the privacy policy of the mobile application Send SMS on time. "
+        "The developer of the application treats the protection of privacy on the Internet Users "
+        "using the mobile application Send SMS on time via Google Play Store as a priority and "
+        "makes every effort to protect this privacy.\n\n"
+
+        "2.\n\n"
+
+        "The application Send SMS on time is installed on mobile devices, in particular on mobile "
+        "phones and tablets after downloading it from Google Play Store.\n\n"
+
+        "3.\n\n"
+
+        "Using the application requires a mobile device with Android - version min. 6.0 with an "
+        "active SIM card installed.\n\n"
+
+        "4.\n\n"
+
+        "Using the application doesn’t require providing any user personal data. The application "
+        "doesn’t store any personal data that could enable a third party to identify a specific "
+        "user of the application.\n\n"
+
+        "5.\n\n"
+
+        "The application Send SMS on time needs access the following permissions on a mobile "
+        "device:\n"
+            "•	sending an SMS\n"
+            "•	reading an SMS\n"
+            "•	contact lists\n"
+        "Application permissions can be revoked by changing the system settings on the device or "
+        "uninstalling the application.\n\n"
+
+        "6.\n\n"
+
+        "If you don’t agree to this privacy policy, please don’t install the application or "
+        "uninstall it. Permanently deleting the application from the mobile device is tantamount "
+        "to terminating use of the application.\n\n"
+
+        "7.\n\n"
+
+        "This privacy policy is only complementary to the Google Play Store privacy policy. The "
+        "developer of the application isn’t responsible for the Google Play Store privacy policy "
+        "and compliance with the provisions of the Act on the protection of personal data and the "
+        "Act on the provision of electronic services as part of the Google Play Store.\n\n"
+
+    </string>
+    <string name="action_settings">Settings</string>
+
 </resources>

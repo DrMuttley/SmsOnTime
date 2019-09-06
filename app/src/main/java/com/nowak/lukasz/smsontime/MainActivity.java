@@ -1,4 +1,4 @@
-package com.example.lukasznowak.smsontime;
+package com.nowak.lukasz.smsontime;
 
 import android.Manifest;
 import android.app.AlarmManager;
@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +20,9 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CheckBox;
@@ -633,5 +635,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // empty box, no SMS
         }
         return false;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.option_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.privacy_policy: {
+
+                Intent myIntent = new Intent(MainActivity.this, PrivacyPolicyActivity.class);
+                MainActivity.this.startActivity(myIntent);
+                return true;
+            }
+            default:{
+                return super.onOptionsItemSelected(item);
+            }
+        }
     }
 }
