@@ -13,11 +13,11 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        WakeLocker.acquire(context);
+        //WakeLocker.acquire(context);
 
         sendSMS(intent.getStringExtra("phone"), intent.getStringExtra("message"));
 
-        WakeLocker.release();
+        //WakeLocker.release();
     }
 
     protected void sendSMS(String phoneNumber, String message){

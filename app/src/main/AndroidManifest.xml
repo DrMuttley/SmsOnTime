@@ -10,10 +10,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".PrivacyPolicyActivity"
-            android:label="@string/title_activity_privacy_policy"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -34,9 +30,10 @@
             android:process=":remote" />
     </application>
     <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <!--
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
+    -->
     <uses-permission android:name="android.permission.SEND_SMS" />
 
 </manifest>

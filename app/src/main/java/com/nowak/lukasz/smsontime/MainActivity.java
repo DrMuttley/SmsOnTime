@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -68,9 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int PERMISSIONS_SEND_SMS = 101;
     private final static int PERMISSIONS_READ_CONTACT = 102;
     private final static int PERMISSIONS_READ_SMS = 103;
-    private final static int PERMISSIONS_WAKE_LOCK = 104;
-
-    private boolean readSmsPermissionFlag;
+    //private final static int PERMISSIONS_WAKE_LOCK = 104;
 
     private final int PHONE_REQUEST_CODE = 111;
 
@@ -92,21 +91,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.exitButton).setOnClickListener(MainActivity.this);
 
         sendMessageCheckBox = findViewById(R.id.sendMessageCheckBox);
-
-        checkPermissions();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        sendMessageCheckBox.setOnCheckedChangeListener(MainActivity.this);
-
         loadPreferenceValue();
 
-        showPreferenceValueInTextView();
+        showPreferenceValueInTextViews();
 
-        if(readSmsPermissionFlag && smsWasSent()){
+        sendMessageCheckBox.setOnCheckedChangeListener(MainActivity.this);
+
+        if(readSmsPermissionGranted() && smsWasSent()){
 
             Toast.makeText(getApplicationContext(), "Message was sent on " +
                     date, Toast.LENGTH_SHORT).show();
@@ -132,13 +129,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.contactButton:{
 
-                if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
-                        != PackageManager.PERMISSION_GRANTED){
-
-                    ActivityCompat.requestPermissions(this, new String[]{
-                            Manifest.permission.READ_CONTACTS}, PERMISSIONS_READ_CONTACT);
-                } else {
+                if(readContactPermissionGranted()){
                     takeNumber(PHONE_REQUEST_CODE);
+                }else{
+                    showPermissionsReason();
                 }
                 break;
             }
@@ -255,6 +249,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builder.show();
     }
 
+    private void showPermissionsReason(){
+
+        AlertDialog.Builder alertDialog  = new AlertDialog.Builder(this);
+        alertDialog.setTitle(Html.fromHtml("<b>Reason for permits needed:</b>"));
+        alertDialog.setMessage(Html.fromHtml(
+                "<font color='#357EC7'><b>" +
+                            "Read contacts" +
+                        "</b><br></font>" +
+                            "To select the recipient of the message<br><br>" +
+                        "<font color='#357EC7'><b>" +
+                            "Send SMS" +
+                        "</b><br></font>" +
+                            "To send SMS message to the recipient<br><br>" +
+                        "<font color='#357EC7'><b>" +
+                            "Read SMS" +
+                        "</b><br></font>" +
+                            "To check if the message has been sent correctly"));
+        alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int id) {
+                requestAllPermissions();
+            }
+        });
+        alertDialog.create();
+        alertDialog.show();
+    }
+
     private void runMessageDialog(){
 
         final EditText edittext = new EditText(MainActivity.this);
@@ -304,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dialog.show();
     }
 
-    private void checkPermissions(){
+    private boolean allPermissionsGranted(){
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
                 != PackageManager.PERMISSION_GRANTED ||
@@ -315,13 +336,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
                         != PackageManager.PERMISSION_GRANTED){
 
-            ActivityCompat.requestPermissions(this, new String[]{
+            return false;
+        }
+        return true;
+    }
+
+    private void requestAllPermissions(){
+
+        ActivityCompat.requestPermissions(this, new String[]{
                             Manifest.permission.SEND_SMS,
                             Manifest.permission.READ_CONTACTS,
                             Manifest.permission.READ_SMS,
                             Manifest.permission.WAKE_LOCK},
                     PERMISSIONS_SEND_SMS);
+    }
+
+    private boolean readSmsPermissionGranted(){
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+                != PackageManager.PERMISSION_GRANTED){
+
+            return false;
         }
+        return true;
+    }
+
+    private boolean readContactPermissionGranted(){
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED){
+
+            return false;
+        }
+        return true;
     }
 
     private void resetDate(){
@@ -414,13 +459,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (requestCode) {
             case PERMISSIONS_SEND_SMS: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    readSmsPermissionFlag = true;
-                    savePreference(SMS_PERMISSION_PREFERENCE_KEY, readSmsPermissionFlag);
                     Log.d("SEND_SMS", "Permission SEND_SMS granted.");
                 } else {
-                    readSmsPermissionFlag = false;
-                    savePreference(SMS_PERMISSION_PREFERENCE_KEY, readSmsPermissionFlag);
                     Log.d("SEND_SMS", "Permission SEND_SMS denied.");
                 }
                 break;
@@ -441,14 +481,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             }
-            case PERMISSIONS_WAKE_LOCK: {
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK granted.");
-                }else{
-                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK denied.");
-                }
-                break;
-            }
+//            case PERMISSIONS_WAKE_LOCK: {
+//                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+//                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK granted.");
+//                }else{
+//                    Log.d("WAKE_LOCK", "Permission WAKE_LOCK denied.");
+//                }
+//                break;
+//            }
         }
     }
 
@@ -469,7 +509,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 savePreference(CONTACT_PREFERENCE_KEY, contact);
                 savePreference(PHONE_NUMBER_PREFERENCE_KEY, phone);
 
-                showPreferenceValueInTextView();
+                showPreferenceValueInTextViews();
 
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
@@ -534,7 +574,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         calendar.setTimeInMillis(sharedPreferences.getLong(CALENDAR_PREFERENCE_KEY, 0));
         contact = sharedPreferences.getString(CONTACT_PREFERENCE_KEY, "");
         phone = sharedPreferences.getString(PHONE_NUMBER_PREFERENCE_KEY, "");
-        readSmsPermissionFlag = sharedPreferences.getBoolean(SMS_PERMISSION_PREFERENCE_KEY, false);
 
         sendMessageCheckBox.setChecked(sharedPreferences.getBoolean(SEND_MESSAGE_CHECKBOX_KEY, false));
     }
@@ -545,7 +584,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textView.setText(value);
     }
 
-    private void showPreferenceValueInTextView(){
+    private void showPreferenceValueInTextViews(){
 
         TextView messageTextView = findViewById(R.id.messageTextView);
         TextView dateTextView = findViewById(R.id.dateTextView);
@@ -569,19 +608,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
 
-            } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
-                    != PackageManager.PERMISSION_GRANTED ||
+            } else if (!allPermissionsGranted()) {
 
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
-                            != PackageManager.PERMISSION_GRANTED) {
+                showPermissionsReason();
 
                 sendMessageCheckBox.setChecked(false);
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
-
-                ActivityCompat.requestPermissions(this, new String[]{
-                                Manifest.permission.READ_SMS,
-                                Manifest.permission.SEND_SMS},
-                        PERMISSIONS_SEND_SMS);
 
             } else if (System.currentTimeMillis() >= calendar.getTimeInMillis() /* && !smsWasSent()*/) {
 
@@ -605,8 +637,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (PendingIntent.getBroadcast(this, 555,
                     new Intent(this, AlarmReceiver.class),
                     PendingIntent.FLAG_NO_CREATE) != null) {
-
-                //Toast.makeText(getApplicationContext(), "Message won't be send", Toast.LENGTH_LONG).show();
 
                 stopAlarmManager();
                 savePreference(SEND_MESSAGE_CHECKBOX_KEY, false);
@@ -650,8 +680,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (item.getItemId()) {
             case R.id.privacy_policy: {
 
-                Intent myIntent = new Intent(MainActivity.this, PrivacyPolicyActivity.class);
-                MainActivity.this.startActivity(myIntent);
+                String url = "http://www.exclusionzone.eu/send-sms-on-time-privacy-policy";
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                startActivity(intent);
+
                 return true;
             }
             default:{
