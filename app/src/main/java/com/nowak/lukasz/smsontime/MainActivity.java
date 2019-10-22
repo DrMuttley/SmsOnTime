@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final String CALENDAR_PREFERENCE_KEY = "calendar_key";
     private final String CONTACT_PREFERENCE_KEY = "contact_key";
     private final String PHONE_NUMBER_PREFERENCE_KEY = "number_key";
-    private final String SMS_PERMISSION_PREFERENCE_KEY = "SMS_permission_key";
     private final String SEND_MESSAGE_CHECKBOX_KEY = "checkBox_key";
 
     private final String colorBlack = "#000000";
@@ -69,7 +68,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int PERMISSIONS_SEND_SMS = 101;
     private final static int PERMISSIONS_READ_CONTACT = 102;
     private final static int PERMISSIONS_READ_SMS = 103;
-    //private final static int PERMISSIONS_WAKE_LOCK = 104;
 
     private final int PHONE_REQUEST_CODE = 111;
 
@@ -346,8 +344,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ActivityCompat.requestPermissions(this, new String[]{
                             Manifest.permission.SEND_SMS,
                             Manifest.permission.READ_CONTACTS,
-                            Manifest.permission.READ_SMS,
-                            Manifest.permission.WAKE_LOCK},
+                            Manifest.permission.READ_SMS},
                     PERMISSIONS_SEND_SMS);
     }
 
